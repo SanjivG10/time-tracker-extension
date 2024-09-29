@@ -1,4 +1,3 @@
-// popup.js
 
 let activityChart = null;
 
@@ -34,8 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateData() {
     chrome.storage.local.get(['trackedSites'], (result) => {
-      const trackedSites = result.trackedSites || {};
-      
+      const trackedSites = {...result?.trackedSites} || {};
+
+
       const filteredSites = getFilteredSites(trackedSites);
       updateDashboard(filteredSites);
       updateChart(filteredSites);
@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
+
   function getFilteredSites(trackedSites) {
     const filter = siteFilter.value.toLowerCase();
     const range = getDateRange();
@@ -54,44 +55,54 @@ document.addEventListener('DOMContentLoaded', () => {
                new Date(data.lastVisit) <= range.end;
       })
       .reduce((filtered, [domain, data]) => {
-        filtered[domain] = data;
+        filtered[domain] = {
+          ...data,
+          totalTime: Object.entries(data.totalTime).reduce((sum, [date, time]) => {
+            const visitDate = new Date(date);
+            if (visitDate >= range.start && visitDate <= range.end) {
+              return sum + time;
+            }
+            return sum;
+          }, 0)
+        };
         return filtered;
       }, {});
   }
 
-  
+
   function updateDashboard(trackedSites) {
     const timeSpent = document.querySelector('#timeSpent .value');
     const urlsVisited = document.querySelector('#urlsVisited .value');
     let topUrl = document.querySelector('#topUrl .value');
-
+  
     let timeSpentCount = 0;
     let topUrlDomain = "";
     let maxTotal = -1;
     
-    Object.keys(trackedSites).forEach(domain => {
-      const site = trackedSites[domain];
-      timeSpentCount+= site.totalTime;
-      if (site.totalTime>maxTotal){
-        maxTotal = site.totalTime;
-        topUrlDomain=domain;
+    Object.entries(trackedSites).forEach(([domain, data]) => {
+      timeSpentCount += data.totalTime;
+      if (data.totalTime > maxTotal) {
+        maxTotal = data.totalTime;
+        topUrlDomain = domain;
       }
     });
-
+  
     timeSpent.textContent = formatTime(timeSpentCount);
-    urlsVisited.textContent = Object.values(trackedSites).length;
+    urlsVisited.textContent = Object.keys(trackedSites).length;
     topUrl.textContent = topUrlDomain;
-}
+  }
+
 
   function updateChart(trackedSites) {
     const ctx = document.getElementById('activityChart').getContext('2d');
-    
+
     const topSites = Object.entries(trackedSites)
-      .sort((a, b) => b[1].totalTime - a[1].totalTime)
-      .slice(0, TOTAL_SITE_TO_DISPLAY_IN_CHART);
-  
-    const labels = topSites.map(([domain, _]) => getDomainName(domain));
-    const data = topSites.map(([_, site]) => site.totalTime / 60);
+    .sort((a, b) => b[1].totalTime - a[1].totalTime)
+    .slice(0, TOTAL_SITE_TO_DISPLAY_IN_CHART);
+
+  const labels = topSites.map(([domain, _]) => getDomainName(domain));
+  const data = topSites.map(([_, site]) => site.totalTime / 60);
+
     
     if (activityChart) {
       activityChart.destroy();
@@ -121,36 +132,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  function updateTable() {
-    const filter = siteFilter.value.toLowerCase();
-    const range = getDateRange();
-    
-    chrome.storage.local.get(['trackedSites'], (result) => {
-      const trackedSites = result.trackedSites || {};
-      siteDataBody.innerHTML = '';
-      
-      Object.entries(trackedSites)
-        .filter(([domain, data]) => {
-          return domain.toLowerCase().includes(filter) && 
-                 new Date(data.lastVisit) >= range.start && 
-                 new Date(data.lastVisit) <= range.end;
-        }).sort((a, b) => b[1].lastVisit - a[1].lastVisit)
-        .forEach(([domain, data]) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${getDomainName(domain)}</td>
-            <td>${data.visits}</td>
-            <td>${formatTime(data.totalTime)}</td>
-            <td>${formatLastVisit(data.lastVisit)}</td>
-            <td><button class="delete-btn" data-domain="${domain}">❌</button></td>
-          `;
-          siteDataBody.appendChild(row);
-        });
-      
-      // Add event listeners for delete buttons
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', handleDelete);
-      });
+  function updateTable(filteredSites) {
+
+    Object.entries(filteredSites)
+    .sort((a, b) => b[1].lastVisit - a[1].lastVisit)
+    .forEach(([domain, data]) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${getDomainName(domain)}</td>
+        <td>${data.visits}</td>
+        <td>${formatTime(data.totalTime)}</td>
+        <td>${formatLastVisit(data.lastVisit)}</td>
+        <td><button class="delete-btn" data-domain="${domain}">❌</button></td>
+      `;
+      siteDataBody.appendChild(row);
+    });
+  
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', handleDelete);
     });
   }
   
@@ -165,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     switch (timeRange.value) {
       case 'day':
-        start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate(),0,0,0);
         end = now;
         break;
       case 'week':

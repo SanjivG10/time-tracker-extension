@@ -23,22 +23,25 @@ function updateTrackedData(domain, timeSpent, isNewVisit = false) {
     const blockedSites = result.blockedSites || [];
     
     if (domain && !blockedSites.includes(domain)) {
+      const today = new Date().toDateString();
       if (!trackedSites[domain]) {
         trackedSites[domain] = {
           visits: 0,
-          totalTime: 0,
-          lastVisit: Date.now() 
+          totalTime: {},
+          lastVisit: Date.now()
         };
       }
       if (isNewVisit) {
         trackedSites[domain].visits++;
       }
       trackedSites[domain].lastVisit = Date.now();
-      trackedSites[domain].totalTime += timeSpent;
+      trackedSites[domain].totalTime[today] = (trackedSites[domain].totalTime[today] || 0) + timeSpent;
       chrome.storage.local.set({ trackedSites });
     }
   });
 }
+
+
 
 function updateActiveTabTime() {
   if ((isBrowserFocused || isSystemActive) && activeTabId && trackedTabs[activeTabId]) {
