@@ -1,0 +1,32 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependency directories
+node_modules/
+bower_components/
+
+# Build output
+dist/
+build/
+coverage/
+
+# Chrome extension specific files
+*.pem
+*.key
+
+# MacOS files
+.DS_Store
+
+# SASS cache
+.sass-cache/
+
+# VS Code settings
+.vscode/
+
+# Webpack or Parcel files (if applicable)
+.cache/
+.parcel-cache/
