@@ -1,0 +1,51 @@
+<!-- options.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Activity Tracker Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container" style="width: 100vh; height: 100vh;">
+    <h1>Web Activity Tracker Settings</h1>
+    
+    <div class="settings-section">
+      <h2>Tracking Options</h2>
+      <label>
+        <input type="checkbox" id="trackClicks"> Track number of clicks
+      </label>
+      <label>
+        <input type="checkbox" id="trackVisits"> Track number of website visits
+      </label>
+      <label>
+        <input type="checkbox" id="trackTime"> Track time spent on websites
+      </label>
+    </div>
+    
+    <div class="settings-section">
+      <h2>Blocked Websites</h2>
+      <p>Enter domain names to exclude from tracking (one per line):</p>
+      <textarea id="blockedSites" rows="5"></textarea>
+
+      <!-- options.html (continued) -->
+    </div>
+    
+    <div class="settings-section">
+      <h2>Data Management</h2>
+      <button id="clearData">Clear All Tracking Data</button>
+      <button id="exportData">Export Tracking Data</button>
+      <input type="file" id="importData" accept=".json" style="display: none;">
+      <button id="importDataBtn">Import Tracking Data</button>
+    </div>
+    
+    <div class="settings-section">
+      <button id="saveSettings">Save Settings</button>
+    </div>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html>
